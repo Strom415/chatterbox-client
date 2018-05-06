@@ -1,27 +1,26 @@
 $(document).ready(function() {
-    app.fetch();
-  // $('#post').on('click', function() {
-  //   app.send();
-  // });  
 
-    var ourMessage;
-    $('#post').on('click', function() {
-      ourMessage = $('#field').val();
-      ourMessage = app.convertMessage(ourMessage);
-      app.send(ourMessage);
-    });
+  var ourMessage;
+  $('#post').on('click', function() {
+    ourMessage = $('#field').val();
+    ourMessage = app.convertMessage(ourMessage, app.username);
+    app.send(ourMessage);
+  });
     
-    $('#clear').on('click', function() {
-      app.clearMessages();
-    });
+  $('#clear').on('click', function() {
+    app.clearMessages();
+  });
     
-setInterval(app.fetch, 100);
+  setInterval(app.fetch, 500);
 });
 
-var app = {};
-app.init = function() {};
-app.server = 'http://parse.sfm8.hackreactor.com/chatterbox/classes/messages';
-  
+var app = {
+  init: function() {},
+  server: 'http://parse.sfm8.hackreactor.com/chatterbox/classes/messages',
+  username: window.location.search.substr(10),
+  roomnames: []
+};
+ 
 app.send = function(message) {
   $.ajax({
     // This is the url you should use to communicate with the parse API server.
@@ -42,11 +41,12 @@ app.send = function(message) {
 var lastID = null;
 var firstID = null;
 var counter = 0;
+
 app.fetch = function() {
   $.ajax({
     url: 'http://parse.sfm8.hackreactor.com/chatterbox/classes/messages',
     type: 'GET',
-    data: 'order=' + '-createdAt',
+    data: {order: '-createdAt'},
     // 'order=-createdAt' 
     // 'where={"playerName":"Sean Plott","cheatMode":false}'
     contentType: 'application/json',
@@ -55,11 +55,9 @@ app.fetch = function() {
         firstID = data.results[0].objectId;
       }
       counter++;
-// console.log(counter);
-// console.log(firstID);
-// console.log(lastID);
+
       if (data.results[0].objectId !== lastID && data.results[0].objectId !== firstID) {
-        $("#chats").append('<div>' + data.results[0].username + ':' + '</div>', '<div>' + data.results[0].text + '</div>');
+        app.renderMessage(data);
         lastID = data.results[0].objectId;
       }
       
@@ -72,15 +70,15 @@ app.fetch = function() {
   });
 };  
  
-app.renderMessage = function() {
-     
+app.renderMessage = function(data) {
+  $("#chats").append('<div class="chat">' + data.results[0].username + ':' + '</div>', '<div class="chat">' + data.results[0].text + '</div>');     
 };
 
 app.convertMessage = function(message, username, roomname) {
   var output = {
-  username: 'anon',
-  text: message,
-  roomname: 'default'
+    username: username,
+    text: message,
+    roomname: 'default'
   }
   return output
 };
@@ -89,21 +87,7 @@ app.clearMessages = function() {
   $('#chats').empty();
 }
 
-
-
-console.log(newSearch);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+app.renderRoom = function(roomname) {
+  console.log('new room');
+  $('#roomSelect').append($('<option/>').val(roomname).text(roomname));
+}
